@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customizable To-Do List App</title>
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --accent-color: #4caf50;
+            --danger-color: #ff6b6b;
+            --bg-color: #f5f7fa;
+            --container-bg: rgba(255, 255, 255, 0.95);
+            --text-color: #333;
+            --text-secondary: #666;
+            --border-color: #e0e0e0;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            --border-radius: 20px;
+            --container-width: 500px;
+            --spacing: 20px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: var(--spacing);
+            transition: all 0.3s ease;
+        }
+
+        body.dark-theme {
+            --bg-color: #1a1a1a;
+            --container-bg: rgba(40, 40, 40, 0.95);
+            --text-color: #ffffff;
+            --text-secondary: #cccccc;
+            --border-color: #444;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+        }
+
+        body.minimal-theme {
+            background: var(--bg-color);
+            --container-bg: white;
+            --border-radius: 8px;
+            --spacing: 15px;
+        }
+
+        body.gradient-theme {
+            background: linear-gradient(45deg, #ff9a9e 0%, #fecfef 25%, #fecfef 75%, #ffdcd4 100%);
+        }
+
+        .settings-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--container-bg);
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            box-shadow: 0 4px 15px var(--shadow-color);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-color);
+        }
+
+        .settings-btn:hover {
+            transform: rotate(90deg) scale(1.1);
+        }
+
+        .settings-panel {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 350px;
+            height: 100vh;
+            background: var(--container-bg);
+            backdrop-filter: blur(10px);
+            box-shadow: -5px 0 20px var(--shadow-color);
+            transition: right 0.3s ease;
+            z-index: 999;
+            overflow-y: auto;
+            padding: 80px 20px 20px;
+        }
+
+        .settings-panel.open {
+            right: 0;
+        }
+
+        .settings-group {
+            margin-bottom: 30px;
+        }
+
+        .settings-group h3 {
+            color: var(--text-color);
+            margin-bottom: 15px;
+            font-size: 18px;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 5px;
+        }
+
+        .setting-item {
+            margin-bottom: 15px;
+        }
+
+        .setting-item label {
+            display: block;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .setting-item input, .setting-item select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            background: var(--container-bg);
+            color: var(--text-color);
+            transition: all 0.3s ease;
+        }
+
+        .setting-item input:focus, .setting-item select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .color-input {
+            height: 40px !important;
+            cursor: pointer;
+        }
+
+        .theme-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .theme-btn {
+            padding: 10px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--container-bg);
+            color: var(--text-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 12px;
+        }
+
+        .theme-btn.active {
+            border-color: var(--primary-color);
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .reset-btn {
+            width: 100%;
+            padding: 12px;
+            background: var(--danger-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .reset-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+        }
+
+        .container {
+            background: var(--container-bg);
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius);
+            box-shadow: 0 20px 40px var(--shadow-color);
+            padding: 30px;
+            width: 100%;
+            max-width: var(--container-width);
+            transition: all 0.3s ease;
+        }
+
+        .container:hover {
+            transform: translateY(-5px);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--text-color);
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            font-weight: 300;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        #taskInput {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid var(--border-color);
+            border-radius: 50px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+            background: var(--container-bg);
+            color: var(--text-color);
+        }
+
+        #taskInput:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: scale(1.02);
+        }
+
+        #addBtn {
+            padding: 15px 25px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        #addBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            border-radius: 15px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--text-color);
+            display: block;
+        }
+
+        #todoList {
+            list-style: none;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        #todoList::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #todoList::-webkit-scrollbar-track {
+            background: var(--border-color);
+            border-radius: 10px;
+        }
+
+        #todoList::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 10px;
+        }
+
+        .todo-item {
+            background: var(--container-bg);
+            margin-bottom: 10px;
+            padding: 20px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 5px 15px var(--shadow-color);
+            transition: all 0.3s ease;
+            border-left: 4px solid var(--primary-color);
+            animation: slideIn 0.3s ease;
+            border: 1px solid var(--border-color);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .todo-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 8px 25px var(--shadow-color);
+        }
+
+        .todo-item.completed {
+            opacity: 0.7;
+            border-left-color: var(--accent-color);
+        }
+
+        .todo-item.completed .todo-text {
+            text-decoration: line-through;
+            color: var(--text-secondary);
+        }
+
+        .todo-checkbox {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border-color);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .todo-checkbox.checked {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+
+        .todo-checkbox.checked::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .todo-text {
+            flex: 1;
+            font-size: 16px;
+            color: var(--text-color);
+            word-break: break-word;
+            line-height: 1.4;
+        }
+
+        .delete-btn {
+            background: linear-gradient(135deg, var(--danger-color), #ee5a24);
+            color: white;
+            border: none;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .delete-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+            font-size: 18px;
+        }
+
+        .empty-state::before {
+            content: '📝';
+            display: block;
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        @media (max-width: 768px) {
+            .settings-panel {
+                width: 300px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .input-container {
+                flex-direction: column;
+            }
+
+            #addBtn {
+                width: 100%;
+            }
+
+            .stats {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .settings-panel {
+                width: 280px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="settings-btn" onclick="toggleSettings()">⚙️</button>
+    
+    <div class="overlay" onclick="closeSettings()"></div>
+    
+    <div class="settings-panel" id="settingsPanel">
+        <div class="settings-group">
+            <h3>🎨 Themes</h3>
+            <div class="theme-buttons">
+                <button class="theme-btn active" onclick="setTheme('default')">Default</button>
+                <button class="theme-btn" onclick="setTheme('dark')">Dark</button>
+                <button class="theme-btn" onclick="setTheme('minimal')">Minimal</button>
+                <button class="theme-btn" onclick="setTheme('gradient')">Gradient</button>
+            </div>
+        </div>
+
+        <div class="settings-group">
+            <h3>🎨 Colors</h3>
+            <div class="setting-item">
+                <label>Primary Color</label>
+                <input type="color" class="color-input" id="primaryColor" value="#667eea" onchange="updateColor('primary', this.value)">
+            </div>
+            <div class="setting-item">
+                <label>Secondary Color</label>
+                <input type="color" class="color-input" id="secondaryColor" value="#764ba2" onchange="updateColor('secondary', this.value)">
+            </div>
+            <div class="setting-item">
+                <label>Accent Color</label>
+                <input type="color" class="color-input" id="accentColor" value="#4caf50" onchange="updateColor('accent', this.value)">
+            </div>
+        </div>
+
+        <div class="settings-group">
+            <h3>🔤 Typography</h3>
+            <div class="setting-item">
+                <label>Font Family</label>
+                <select id="fontFamily" onchange="updateFont(this.value)">
+                    <option value="'Segoe UI', Tahoma, Geneva, Verdana, sans-serif">Segoe UI</option>
+                    <option value="'Helvetica Neue', Arial, sans-serif">Helvetica</option>
+                    <option value="'Roboto', sans-serif">Roboto</option>
+                    <option value="'Open Sans', sans-serif">Open Sans</option>
+                    <option value="'Poppins', sans-serif">Poppins</option>
+                    <option value="'Inter', sans-serif">Inter</option>
+                    <option value="Georgia, serif">Georgia</option>
+                    <option value="'Times New Roman', serif">Times New Roman</option>
+                    <option value="'Courier New', monospace">Courier New</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="settings-group">
+            <h3>📐 Layout</h3>
+            <div class="setting-item">
+                <label>Container Width (px)</label>
+                <input type="range" min="300" max="800" value="500" id="containerWidth" onchange="updateWidth(this.value)">
+                <span id="widthValue">500px</span>
+            </div>
+            <div class="setting-item">
+                <label>Border Radius (px)</label>
+                <input type="range" min="0" max="50" value="20" id="borderRadius" onchange="updateRadius(this.value)">
+                <span id="radiusValue">20px</span>
+            </div>
+            <div class="setting-item">
+                <label>Spacing (px)</label>
+                <input type="range" min="10" max="40" value="20" id="spacing" onchange="updateSpacing(this.value)">
+                <span id="spacingValue">20px</span>
+            </div>
+        </div>
+
+        <div class="settings-group">
+            <h3>🔄 Actions</h3>
+            <button class="reset-btn" onclick="resetSettings()">Reset to Default</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <img src="Logo.png" alt="Logo" style="display: block;
+                                              margin: 0 auto;
+                                              width: 100px;
+                                              height: auto;
+                                              background-color: #000;
+                                              border-radius: 50%;
+                                              box-shadow: 0 50px 80px rgba(0, 0, 0, 0.3);">
+        <h1 style="font-family: 'Times New Roman', Times, serif;
+                   padding-top: 50px;">MY TO DO LIST</h1>
+        
+        <div class="input-container">
+            <input type="text" id="taskInput" placeholder="Add a new task..." maxlength="100">
+            <button id="addBtn">Add Task</button>
+        </div>
+
+        <div class="stats">
+            <div class="stat">
+                <span class="stat-number" id="totalTasks">0</span>
+                <span>Total</span>
+            </div>
+            <div class="stat">
+                <span class="stat-number" id="completedTasks">0</span>
+                <span>Completed</span>
+            </div>
+            <div class="stat">
+                <span class="stat-number" id="pendingTasks">0</span>
+                <span>Pending</span>
+            </div>
+        </div>
+
+        <ul id="todoList">
+            <div class="empty-state">
+                Add Tasks!
+            </div>
+        </ul>
+    </div>
+
+    <script>
+        class TodoApp {
+            constructor() {
+                this.tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+                this.settings = JSON.parse(localStorage.getItem('settings')) || this.getDefaultSettings();
+                this.taskInput = document.getElementById('taskInput');
+                this.addBtn = document.getElementById('addBtn');
+                this.todoList = document.getElementById('todoList');
+                
+                this.bindEvents();
+                this.applySettings();
+                this.render();
+            }
+
+            getDefaultSettings() {
+                return {
+                    theme: 'default',
+                    primaryColor: '#667eea',
+                    secondaryColor: '#764ba2',
+                    accentColor: '#4caf50',
+                    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+                    containerWidth: 500,
+                    borderRadius: 20,
+                    spacing: 20
+                };
+            }
+
+            bindEvents() {
+                this.addBtn.addEventListener('click', () => this.addTask());
+                this.taskInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.addTask();
+                });
+            }
+
+            addTask() {
+                const text = this.taskInput.value.trim();
+                if (!text) return;
+
+                const task = {
+                    id: Date.now(),
+                    text: text,
+                    completed: false
+                };
+
+                this.tasks.unshift(task);
+                this.taskInput.value = '';
+                this.save();
+                this.render();
+            }
+
+            toggleTask(id) {
+                const task = this.tasks.find(t => t.id === id);
+                if (task) {
+                    task.completed = !task.completed;
+                    this.save();
+                    this.render();
+                }
+            }
+
+            deleteTask(id) {
+                this.tasks = this.tasks.filter(t => t.id !== id);
+                this.save();
+                this.render();
+            }
+
+            save() {
+                localStorage.setItem('tasks', JSON.stringify(this.tasks));
+            }
+
+            saveSettings() {
+                localStorage.setItem('settings', JSON.stringify(this.settings));
+            }
+
+            applySettings() {
+                const root = document.documentElement;
+                root.style.setProperty('--primary-color', this.settings.primaryColor);
+                root.style.setProperty('--secondary-color', this.settings.secondaryColor);
+                root.style.setProperty('--accent-color', this.settings.accentColor);
+                root.style.setProperty('--font-family', this.settings.fontFamily);
+                root.style.setProperty('--container-width', this.settings.containerWidth + 'px');
+                root.style.setProperty('--border-radius', this.settings.borderRadius + 'px');
+                root.style.setProperty('--spacing', this.settings.spacing + 'px');
+
+                // Update form values
+                document.getElementById('primaryColor').value = this.settings.primaryColor;
+                document.getElementById('secondaryColor').value = this.settings.secondaryColor;
+                document.getElementById('accentColor').value = this.settings.accentColor;
+                document.getElementById('fontFamily').value = this.settings.fontFamily;
+                document.getElementById('containerWidth').value = this.settings.containerWidth;
+                document.getElementById('borderRadius').value = this.settings.borderRadius;
+                document.getElementById('spacing').value = this.settings.spacing;
+                document.getElementById('widthValue').textContent = this.settings.containerWidth + 'px';
+                document.getElementById('radiusValue').textContent = this.settings.borderRadius + 'px';
+                document.getElementById('spacingValue').textContent = this.settings.spacing + 'px';
+
+                // Apply theme
+                document.body.className = this.settings.theme === 'default' ? '' : this.settings.theme + '-theme';
+                document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
+                document.querySelector(`[onclick="setTheme('${this.settings.theme}')"]`).classList.add('active');
+            }
+
+            updateSettings(key, value) {
+                this.settings[key] = value;
+                this.saveSettings();
+                this.applySettings();
+            }
+
+            resetSettings() {
+                this.settings = this.getDefaultSettings();
+                this.saveSettings();
+                this.applySettings();
+            }
+
+            updateStats() {
+                const total = this.tasks.length;
+                const completed = this.tasks.filter(t => t.completed).length;
+                const pending = total - completed;
+
+                document.getElementById('totalTasks').textContent = total;
+                document.getElementById('completedTasks').textContent = completed;
+                document.getElementById('pendingTasks').textContent = pending;
+            }
+
+            render() {
+                this.updateStats();
+
+                if (this.tasks.length === 0) {
+                    this.todoList.innerHTML = '<div class="empty-state">Start by adding your first task above!</div>';
+                    return;
+                }
+
+                this.todoList.innerHTML = this.tasks.map(task => `
+                    <li class="todo-item ${task.completed ? 'completed' : ''}">
+                        <div class="todo-checkbox ${task.completed ? 'checked' : ''}" 
+                             onclick="app.toggleTask(${task.id})"></div>
+                        <span class="todo-text">${this.escapeHtml(task.text)}</span>
+                        <button class="delete-btn" onclick="app.deleteTask(${task.id})">×</button>
+                    </li>
+                `).join('');
+            }
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+        }
+
+        // Settings functions
+        function toggleSettings() {
+            const panel = document.getElementById('settingsPanel');
+            const overlay = document.querySelector('.overlay');
+            panel.classList.toggle('open');
+            overlay.classList.toggle('active');
+        }
+
+        function closeSettings() {
+            const panel = document.getElementById('settingsPanel');
+            const overlay = document.querySelector('.overlay');
+            panel.classList.remove('open');
+            overlay.classList.remove('active');
+        }
+
+        function setTheme(theme) {
+            app.updateSettings('theme', theme);
+        }
+
+        function updateColor(type, value) {
+            const colorMap = {
+                'primary': 'primaryColor',
+                'secondary': 'secondaryColor',
+                'accent': 'accentColor'
+            };
+            app.updateSettings(colorMap[type], value);
+        }
+
+        function updateFont(font) {
+            app.updateSettings('fontFamily', font);
+        }
+
+        function updateWidth(width) {
+            app.updateSettings('containerWidth', parseInt(width));
+            document.getElementById('widthValue').textContent = width + 'px';
+        }
+
+        function updateRadius(radius) {
+            app.updateSettings('borderRadius', parseInt(radius));
+            document.getElementById('radiusValue').textContent = radius + 'px';
+        }
+
+        function updateSpacing(spacing) {
+            app.updateSettings('spacing', parseInt(spacing));
+            document.getElementById('spacingValue').textContent = spacing + 'px';
+        }
+
+        function resetSettings() {
+            app.resetSettings();
+        }
+
+        // Initialize the app
+        const app = new TodoApp();
+
+        // Close settings when clicking outside
+        document.addEventListener('click', (e) => {
+            const panel = document.getElementById('settingsPanel');
+            const settingsBtn = document.querySelector('.settings-btn');
+            
+            if (!panel.contains(e.target) && !settingsBtn.contains(e.target) && panel.classList.contains('open')) {
+                closeSettings();
+            }
+        });
+    </script>
+</body>
+</html>
